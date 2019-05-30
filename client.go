@@ -40,12 +40,12 @@ type Client struct {
 
 	oauthToken *oauthToken
 
-	Oauth *OauthService
-	Login *LoginService
-	User  *UserService
-	Role  *RoleService
-	Group *GroupService
-	// SAMLService  *SAMLService
+	Oauth       *OauthService
+	Login       *LoginService
+	User        *UserService
+	Role        *RoleService
+	Group       *GroupService
+	SAMLService *SAMLService
 	// EventService *EventService
 
 	sync.Mutex
@@ -66,6 +66,7 @@ func New(clientID, clientSecret, shard, subdomain string) *Client {
 	c.User = &UserService{service: &c.common}
 	c.Role = &RoleService{service: &c.common}
 	c.Group = &GroupService{service: &c.common}
+	c.SAMLService = &SAMLService{service: &c.common}
 
 	return c
 }
