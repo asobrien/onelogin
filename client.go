@@ -231,6 +231,7 @@ type responseMessage struct {
 		Code    int64  `json:"code"`
 		Type    string `json:"type"`
 		Message string `json:"message"`
+		Error   bool   `json:"error"`
 	} `json:"status"`
 	Pagination *struct {
 		BeforeCursor *string `json:"before_cursor"`
