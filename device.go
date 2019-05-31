@@ -1,25 +1,24 @@
 package onelogin
 
 import (
-    "context"
-    "errors"
-    "strconv"
-    "fmt"
-    "bytes"
-    "encoding/json"
+	"bytes"
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"strconv"
 )
 
 // TODO: move to device.go
 // verifyFactorParams is a struct that holds information requeired in requests that
 // verify a user's second-factor device.
 type verifyFactorParams struct {
-    AppID       string `json:"app_id,omitempty"`
+	AppID       string `json:"app_id,omitempty"`
 	DeviceID    string `json:"device_id"`
 	StateToken  string `json:"state_token"`
 	OTPToken    string `json:"otp_token"`
 	DoNotNotify bool   `json:"do_not_notify"`
 }
-
 
 // Devices contains registered user devices that can be used for MFA.
 type Devices struct {
@@ -43,7 +42,7 @@ func getDeviceID(name string, devices []*Devices) (string, error) {
 		return "", errors.New(fmt.Sprintf("verify device not found: %s", name))
 	}
 
-    return deviceID, nil
+	return deviceID, nil
 }
 
 // verifyFactor handles calls the `verify_factor` endpoint. This function can be used to either directly
@@ -53,9 +52,8 @@ func getDeviceID(name string, devices []*Devices) (string, error) {
 // https://developers.onelogin.com/api-docs/1/login-page/verify-factor
 func (s *Client) verifyFactorClone(ctx context.Context, endpoint string, p *verifyFactorParams) (*responseMessage, error) {
 
-    // NOTE: only applicable for LoginService
+	// NOTE: only applicable for LoginService
 	// u := "/api/1/login/verify_factor"
-
 
 	// Get the user's deviceID or error
 	// var deviceID string
@@ -69,11 +67,11 @@ func (s *Client) verifyFactorClone(ctx context.Context, endpoint string, p *veri
 	// 	return nil, errors.New(fmt.Sprintf("verify device not found: %s", device))
 	// }
 
-    // FIXME: move to caller
-    // deviceID, err := getDeviceID(device, s.auth.Devices)
-    // if err != nil {
-    //     return nil, err
-    // }
+	// FIXME: move to caller
+	// deviceID, err := getDeviceID(device, s.auth.Devices)
+	// if err != nil {
+	//     return nil, err
+	// }
 
 	req, err := s.NewRequest("POST", endpoint, p)
 	if err != nil {
@@ -99,7 +97,7 @@ func (s *Client) verifyFactorClone(ctx context.Context, endpoint string, p *veri
 		return nil, err
 	}
 
-    // FIXME: this belongs in auth
+	// FIXME: this belongs in auth
 	// If this is push verification, there is no response data
 	// if m.Status.Code == 200 && m.Status.Type == "pending" {
 	// 	return nil, nil
@@ -108,10 +106,10 @@ func (s *Client) verifyFactorClone(ctx context.Context, endpoint string, p *veri
 	// Read the associate response data upon successful verification. This is either a
 	// push event follow-up call or a verification of device with a known passcode.
 	if m.Status.Error {
-	    err = errors.New("verify factor failed")
+		err = errors.New("verify factor failed")
 	}
 
-    return &m, err
+	return &m, err
 }
 
 // verifyFactor handles calls the `verify_factor` endpoint. This function can be used to either directly
@@ -124,7 +122,7 @@ func (s *Client) verifyFactorClone(ctx context.Context, endpoint string, p *veri
 //       then fix in corresponding login.go
 func (s *LoginService) verifyFactor(ctx context.Context, endpoint, device, token string, doNotVerify bool) (*authResponse, error) {
 
-    // NOTE: only applicable for LoginService
+	// NOTE: only applicable for LoginService
 	// u := "/api/1/login/verify_factor"
 
 	if s.auth == nil {
@@ -143,10 +141,10 @@ func (s *LoginService) verifyFactor(ctx context.Context, endpoint, device, token
 	// 	return nil, errors.New(fmt.Sprintf("verify device not found: %s", device))
 	// }
 
-    deviceID, err := getDeviceID(device, s.auth.Devices)
-    if err != nil {
-        return nil, err
-    }
+	deviceID, err := getDeviceID(device, s.auth.Devices)
+	if err != nil {
+		return nil, err
+	}
 
 	s.verifyDevice = &device
 	a := verifyFactorParams{

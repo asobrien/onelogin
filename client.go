@@ -25,7 +25,7 @@ type service struct {
 
 // A Client interacts with OneLogin.
 type Client struct {
-	client *http.Client
+	client  *http.Client
 	BaseURL *url.URL
 
 	clientID     string
@@ -34,12 +34,12 @@ type Client struct {
 	// User agent used when communicating with the OneLogin api.
 	UserAgent string
 	// Reuse a single struct instead of allocating one for each service on the heap.
-    common service
+	common     service
 	oauthToken *oauthToken
 	sync.Mutex
 
-    // Namespaced services
-    // https://developers.onelogin.com/api-docs/1/getting-started/dev-overview
+	// Namespaced services
+	// https://developers.onelogin.com/api-docs/1/getting-started/dev-overview
 	Oauth       *OauthService
 	Login       *LoginService
 	User        *UserService

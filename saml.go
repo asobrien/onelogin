@@ -129,40 +129,40 @@ func (s *SAMLService) GenerateSAMLAssertion(ctx context.Context, emailOrUsername
 }
 
 func (s *SAMLService) GenerateSAMLAssertionWithVerify(ctx context.Context, emailOrUsername, password, appID, ipAddress string, device string, token string) (*SAMLAssertion, error) {
-    saml, err := s.GenerateSAMLAssertion(ctx, emailOrUsername, password, appID, ipAddress)
-    if err != nil {
-        return nil, err
-    }
+	saml, err := s.GenerateSAMLAssertion(ctx, emailOrUsername, password, appID, ipAddress)
+	if err != nil {
+		return nil, err
+	}
 
-    if saml.MFA == nil {
-        return nil, errors.New("no MFA details in response")
-    }
+	if saml.MFA == nil {
+		return nil, errors.New("no MFA details in response")
+	}
 
-    deviceID, err := getDeviceID(device, saml.MFA.Devices)
-    if err != nil {
-        return nil, err
-    }
+	deviceID, err := getDeviceID(device, saml.MFA.Devices)
+	if err != nil {
+		return nil, err
+	}
 
 	p := &verifyFactorParams{
-        AppID:       appID,
+		AppID:       appID,
 		DeviceID:    deviceID,
 		StateToken:  saml.MFA.StateToken,
 		OTPToken:    token,
 		DoNotNotify: true,
 	}
 
-    resp, err := s.client.verifyFactorClone(ctx, saml.MFA.CallbackUrl, p)
-    if err != nil {
-        return nil, err
-    }
+	resp, err := s.client.verifyFactorClone(ctx, saml.MFA.CallbackUrl, p)
+	if err != nil {
+		return nil, err
+	}
 
-    // unpack assertion
-    var r string
-    err = json.Unmarshal(resp.Data, &r)
-    if err != nil {
-        return saml, err
-    }
-    saml.Assertion = &r
+	// unpack assertion
+	var r string
+	err = json.Unmarshal(resp.Data, &r)
+	if err != nil {
+		return saml, err
+	}
+	saml.Assertion = &r
 
-    return saml, nil
+	return saml, nil
 }

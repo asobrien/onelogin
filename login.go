@@ -94,7 +94,7 @@ func (s *LoginService) Authenticate(ctx context.Context, emailOrUsername string,
 // AuthenticateWithVerify is used to strictly verify that a user is able both: authenticate with username and password AND to verify
 // a user's second-factor device. If both conditions are not satisfied an error will be returned.
 func (s *LoginService) AuthenticateWithVerify(ctx context.Context, emailOrUsername string, password string, device string, token string) (*AuthenticatedUser, error) {
-    u := "/api/1/login/verify_factor"
+	u := "/api/1/login/verify_factor"
 
 	// authenticate to verify username and password and generate auth response
 	_, err := s.authenticate(ctx, emailOrUsername, password)
@@ -115,7 +115,7 @@ func (s *LoginService) AuthenticateWithVerify(ctx context.Context, emailOrUserna
 // user information if authentication is successful, a follow call via VerifyPushToken is required to verify the passcode
 // generated in the push event and complete authentication.
 func (s *LoginService) AuthenticateWithPushVerify(ctx context.Context, emailOrUsername string, password string, device string) error {
-    u := "/api/1/login/verify_factor"
+	u := "/api/1/login/verify_factor"
 
 	_, err := s.authenticate(ctx, emailOrUsername, password)
 	if err != nil {
@@ -131,13 +131,13 @@ func (s *LoginService) AuthenticateWithPushVerify(ctx context.Context, emailOrUs
 // of an asynchronous device. If this is called prior to the generation of a token via AuthenticateWithPushVerify,
 // an error will be returned.
 func (s *LoginService) VerifyPushToken(ctx context.Context, token string) (*AuthenticatedUser, error) {
-    u := "/api/1/login/verify_factor"
+	u := "/api/1/login/verify_factor"
 
 	if s.verifyDevice == nil {
 		return nil, errors.New("no verifyDevice assigned, 'AuthenticateWithPush' needs to called before this function can be used")
 	}
 
-    // do not push notify on verify
+	// do not push notify on verify
 	auth, err := s.verifyFactor(ctx, u, *s.verifyDevice, token, true)
 	if err != nil {
 		return nil, err
