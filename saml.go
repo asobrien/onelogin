@@ -26,9 +26,10 @@ type samlParams struct {
 	IPAddress string `json:"ip_address,omitempty"`
 }
 
+// TODO: can be generic DeviceResponse?
 // SAMLResponseMFA is a struct that contains details about MFA verification.
 type SAMLResponseMFA struct {
-	StateToken  string             `json:"state_token`
+	StateToken  string             `json:"state_token"`
 	Devices     []*Devices         `json:"devices"`
 	CallbackUrl string             `json:"callback_url"`
 	User        *AuthenticatedUser `json:"user"`
@@ -111,18 +112,57 @@ func (s *SAMLService) GenerateSAMLAssertion(ctx context.Context, emailOrUsername
 	switch assertion.Message {
 	case "Success":
 		// unpack data into assertion
-		s := ""
-		err = json.Unmarshal(m.Data, &s)
-		assertion.Assertion = &s
+		r := ""
+		err = json.Unmarshal(m.Data, &r)
+		assertion.Assertion = &r
 	case "MFA is required for this user":
 		// unpack into MFA
-		var s []SAMLResponseMFA
-		err = json.Unmarshal(m.Data, &s)
-		assertion.MFA = &s[0] // TODO: check bounds
+		var r []SAMLResponseMFA
+		err = json.Unmarshal(m.Data, &r)
+		assertion.MFA = &r[0] // TODO: check bounds
 	default:
 		// some sort of error
 		err = errors.New(fmt.Sprintf("unable to parse response message: %s", assertion.Message))
 	}
 
 	return assertion, err
+}
+
+func (s *SAMLService) GenerateSAMLAssertionWithVerify(ctx context.Context, emailOrUsername, password, appID, ipAddress string, device string, token string) (*SAMLAssertion, error) {
+    saml, err := s.GenerateSAMLAssertion(ctx, emailOrUsername, password, appID, ipAddress)
+    if err != nil {
+        return nil, err
+    }
+
+    if saml.MFA == nil {
+        return nil, errors.New("no MFA details in response")
+    }
+
+    deviceID, err := getDeviceID(device, saml.MFA.Devices)
+    if err != nil {
+        return nil, err
+    }
+
+	p := &verifyFactorParams{
+        AppID:       appID,
+		DeviceID:    deviceID,
+		StateToken:  saml.MFA.StateToken,
+		OTPToken:    token,
+		DoNotNotify: true,
+	}
+
+    resp, err := s.client.verifyFactorClone(ctx, saml.MFA.CallbackUrl, p)
+    if err != nil {
+        return nil, err
+    }
+
+    // unpack assertion
+    var r string
+    err = json.Unmarshal(resp.Data, &r)
+    if err != nil {
+        return saml, err
+    }
+    saml.Assertion = &r
+
+    return saml, nil
 }
