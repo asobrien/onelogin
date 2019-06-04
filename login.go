@@ -97,17 +97,29 @@ func (s *LoginService) AuthenticateWithVerify(ctx context.Context, emailOrUserna
 	u := "/api/1/login/verify_factor"
 
 	// authenticate to verify username and password and generate auth response
-	_, err := s.authenticate(ctx, emailOrUsername, password)
+	auth, err := s.authenticate(ctx, emailOrUsername, password)
+	if err != nil {
+		return nil, err
+	}
+
+	d, err := getDeviceID(device, s.auth.Devices)
 	if err != nil {
 		return nil, err
 	}
 
 	// regenerate authenticateResponse via the verify_factor endpoint
-	authv, err := s.verifyFactor(ctx, u, device, token, true)
+	p := &verifyFactorParams{
+		DeviceID:    d,
+		StateToken:  auth.StateToken,
+		OTPToken:    token,
+		DoNotNotify: true,
+	}
+	_, err = s.client.verifyFactor(ctx, u, p)
 	if err != nil {
 		return nil, err
 	}
-	return authv.User, nil
+
+	return auth.User, nil
 }
 
 // AuthenticateWithPushVerify can be used with asynchronous factor methods (e.g., SMS). This function is first called to
@@ -117,13 +129,23 @@ func (s *LoginService) AuthenticateWithVerify(ctx context.Context, emailOrUserna
 func (s *LoginService) AuthenticateWithPushVerify(ctx context.Context, emailOrUsername string, password string, device string) error {
 	u := "/api/1/login/verify_factor"
 
-	_, err := s.authenticate(ctx, emailOrUsername, password)
+	auth, err := s.authenticate(ctx, emailOrUsername, password)
+	if err != nil {
+		return err
+	}
+
+	d, err := getDeviceID(device, auth.Devices)
 	if err != nil {
 		return err
 	}
 
 	// generate a push code, pass empty token as push notify generates token
-	_, err = s.verifyFactor(ctx, u, device, "", false)
+	p := &verifyFactorParams{
+		DeviceID:    d,
+		StateToken:  auth.StateToken,
+		DoNotNotify: false,
+	}
+	_, err = s.client.verifyFactor(ctx, u, p)
 	return err
 }
 
@@ -138,10 +160,16 @@ func (s *LoginService) VerifyPushToken(ctx context.Context, token string) (*Auth
 	}
 
 	// do not push notify on verify
-	auth, err := s.verifyFactor(ctx, u, *s.verifyDevice, token, true)
+	p := &verifyFactorParams{
+		DeviceID:    *s.verifyDevice,
+		StateToken:  s.auth.StateToken,
+		OTPToken:    token,
+		DoNotNotify: true,
+	}
+	_, err := s.client.verifyFactor(ctx, u, p)
 	if err != nil {
 		return nil, err
 	}
 
-	return auth.User, nil
+	return s.auth.User, nil
 }

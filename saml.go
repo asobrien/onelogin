@@ -151,7 +151,7 @@ func (s *SAMLService) GenerateSAMLAssertionWithVerify(ctx context.Context, email
 		DoNotNotify: true,
 	}
 
-	resp, err := s.client.verifyFactorClone(ctx, saml.MFA.CallbackUrl, p)
+	resp, err := s.client.verifyFactor(ctx, saml.MFA.CallbackUrl, p)
 	if err != nil {
 		return nil, err
 	}

@@ -15,7 +15,7 @@ import (
 type verifyFactorParams struct {
 	AppID       string `json:"app_id,omitempty"`
 	DeviceID    string `json:"device_id"`
-	StateToken  string `json:"state_token"`
+	StateToken  string `json:"state_token,omitempty"`
 	OTPToken    string `json:"otp_token"`
 	DoNotNotify bool   `json:"do_not_notify"`
 }
@@ -50,7 +50,7 @@ func getDeviceID(name string, devices []*Devices) (string, error) {
 // this function does not verify appropriate behavior, that is delegated to the API. For example, a
 // 'Google Authenticator' device can not generate a push event.
 // https://developers.onelogin.com/api-docs/1/login-page/verify-factor
-func (s *Client) verifyFactorClone(ctx context.Context, endpoint string, p *verifyFactorParams) (*responseMessage, error) {
+func (s *Client) verifyFactor(ctx context.Context, endpoint string, p *verifyFactorParams) (*responseMessage, error) {
 
 	// NOTE: only applicable for LoginService
 	// u := "/api/1/login/verify_factor"
@@ -120,7 +120,7 @@ func (s *Client) verifyFactorClone(ctx context.Context, endpoint string, p *veri
 //
 // TODO: clone, modify to use verifyFactorParams and test with SAML
 //       then fix in corresponding login.go
-func (s *LoginService) verifyFactor(ctx context.Context, endpoint, device, token string, doNotVerify bool) (*authResponse, error) {
+func (s *LoginService) verifyFactorDEPRECATE(ctx context.Context, endpoint, device, token string, doNotVerify bool) (*authResponse, error) {
 
 	// NOTE: only applicable for LoginService
 	// u := "/api/1/login/verify_factor"
