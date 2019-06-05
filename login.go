@@ -2,14 +2,14 @@ package onelogin
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 )
 
 // LoginService handles communications with login pages.
 // https://developers.onelogin.com/api-docs/1/login-page/login-user-via-api
 type LoginService struct {
-	auth         *authResponse
-	verifyDevice *string
 	*service
 }
 
@@ -21,17 +21,20 @@ type authParams struct {
 	Subdomain string `json:"subdomain"`
 }
 
-// authResponse is a struct where data in the authentication response can be
+// AuthResponse is a struct where data in the authentication response can be
 // marshalled into.
-type authResponse struct {
-	Status       string             `json:"status"`
+type AuthResponse struct {
+	Status       string             `json:"status,omitempty"`
 	User         *AuthenticatedUser `json:"user"`
-	ReturnToURL  string             `json:"return_to_url"`
-	ExpiresAt    string             `json:"expires_at"`
-	SessionToken string             `json:"session_token"`
-	StateToken   string             `json:"state_token"`
-	CallbackUrl  string             `json:"callback_url"`
-	Devices      []*Devices         `json:"devices"`
+	ReturnToURL  string             `json:"return_to_url,omitempty"`
+	ExpiresAt    string             `json:"expires_at,omitempty"`
+	SessionToken string             `json:"session_token,omitempty"`
+	StateToken   string             `json:"state_token,omitempty"`
+	CallbackUrl  string             `json:"callback_url,omitempty"`
+	Devices      []*Device          `json:"devices,omitempty"`
+
+	// deviceID that can be used in subsequent verify calls (e.g., VerifyPushToken)
+	verifyDevice string
 }
 
 // AuthenticatedUser contains user information for the Authentication.
@@ -46,7 +49,7 @@ type AuthenticatedUser struct {
 // authenticate a user via the API. This function returns an *authResponse, which can be used to
 // setup downstream verification with a second-factor device. The public method to authenticate a
 // user is 'Authenticate' which returns user details upon successful authentication.
-func (s *LoginService) authenticate(ctx context.Context, emailOrUsername string, password string) (*authResponse, error) {
+func (s *LoginService) authenticate(ctx context.Context, emailOrUsername string, password string) (*AuthResponse, error) {
 	u := "/api/1/login/auth"
 
 	a := authParams{
@@ -64,22 +67,20 @@ func (s *LoginService) authenticate(ctx context.Context, emailOrUsername string,
 		return nil, err
 	}
 
-	var d []authResponse
+	var d []AuthResponse
 	_, err = s.client.Do(ctx, req, &d)
 	if err != nil {
 		return nil, err
 	}
 
-	// auth is successful even if additional verification is required and a
-	// state_token is issued.
-	// https://developers.onelogin.com/api-docs/1/login-page/create-session-login-token
-	if len(d) == 1 && (d[0].Status == "Authenticated" || d[0].StateToken != "") {
-		s.auth = &d[0]
-		return &d[0], nil
+	if len(d) != 1 {
+		return nil, errors.New("unexpected authentication response")
 	}
-	return nil, errors.New("authentication failed")
+
+	return &d[0], nil
 }
 
+// TODO: do we need a user by itself, or always just pass the auth response?
 // Authenticate a user with an email (or username) and a password. Note that a user can *always* successfully
 // authenticate whether or not MFA is required. To check whether a user is able to verify with strict MFA compliance,
 // AuthenticateWithVerify should be used.
@@ -102,7 +103,7 @@ func (s *LoginService) AuthenticateWithVerify(ctx context.Context, emailOrUserna
 		return nil, err
 	}
 
-	d, err := getDeviceID(device, s.auth.Devices)
+	d, err := getDeviceID(device, auth.Devices)
 	if err != nil {
 		return nil, err
 	}
@@ -126,50 +127,67 @@ func (s *LoginService) AuthenticateWithVerify(ctx context.Context, emailOrUserna
 // verify username/password authentication and then to generate a push event. Note that this function does not return
 // user information if authentication is successful, a follow call via VerifyPushToken is required to verify the passcode
 // generated in the push event and complete authentication.
-func (s *LoginService) AuthenticateWithPushVerify(ctx context.Context, emailOrUsername string, password string, device string) error {
+func (s *LoginService) AuthenticateWithPushVerify(ctx context.Context, emailOrUsername string, password string, device string) (*AuthResponse, error) {
 	u := "/api/1/login/verify_factor"
 
 	auth, err := s.authenticate(ctx, emailOrUsername, password)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	d, err := getDeviceID(device, auth.Devices)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// generate a push code, pass empty token as push notify generates token
+	auth.verifyDevice = d
 	p := &verifyFactorParams{
 		DeviceID:    d,
 		StateToken:  auth.StateToken,
 		DoNotNotify: false,
 	}
-	_, err = s.client.verifyFactor(ctx, u, p)
-	return err
+
+	m, err := s.client.verifyFactor(ctx, u, p)
+	if err != nil {
+		return nil, err
+	}
+	if m.Status.Type != "pending" {
+		return nil, errors.New(fmt.Sprintf("verify factor failed, unexpected status = %v", m.Status.Type))
+	}
+
+	return auth, nil
 }
 
 // VerifyPushToken is a follow-on to AuthenticateWithPushVerify and it used to complete second-factor authentication
 // of an asynchronous device. If this is called prior to the generation of a token via AuthenticateWithPushVerify,
 // an error will be returned.
-func (s *LoginService) VerifyPushToken(ctx context.Context, token string) (*AuthenticatedUser, error) {
+func (s *LoginService) VerifyPushToken(ctx context.Context, auth *AuthResponse, token string) (*AuthenticatedUser, error) {
 	u := "/api/1/login/verify_factor"
 
-	if s.verifyDevice == nil {
-		return nil, errors.New("no verifyDevice assigned, 'AuthenticateWithPush' needs to called before this function can be used")
-	}
+	// FIXME: can't use this
+	// if s.verifyDevice == nil {
+	// 	return nil, errors.New("no verifyDevice assigned, 'AuthenticateWithPush' needs to called before this function can be used")
+	// }
 
 	// do not push notify on verify
 	p := &verifyFactorParams{
-		DeviceID:    *s.verifyDevice,
-		StateToken:  s.auth.StateToken,
+		// TODO: *this* is really required!
+		DeviceID:    auth.verifyDevice,
+		StateToken:  auth.StateToken,
 		OTPToken:    token,
 		DoNotNotify: true,
 	}
-	_, err := s.client.verifyFactor(ctx, u, p)
+	resp, err := s.client.verifyFactor(ctx, u, p)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.auth.User, nil
+	var d []AuthenticatedUser
+	err = json.Unmarshal(resp.Data, &d)
+	if len(d) != 0 {
+		return nil, errors.New("unexppected authentication response")
+	}
+
+	return &d[0], nil
 }

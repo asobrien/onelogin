@@ -217,7 +217,56 @@ func TestLoginAuthenticateWithPushVerify(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var got string
-			err := c.Login.AuthenticateWithPushVerify(context.Background(), tt.username, tt.password, tt.device)
+			_, err := c.Login.AuthenticateWithPushVerify(context.Background(), tt.username, tt.password, tt.device)
+			if !tt.wantErr && (err != nil) {
+				t.Errorf("no error expected, got: %v", err)
+			}
+			if tt.wantErr && (err == nil) {
+				t.Error("expected error, got nil")
+			}
+
+			if tt.wantErr {
+				got = err.Error()
+			}
+			if got != tt.want {
+				t.Errorf("got: %v, want: %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestLoginVerifyPushToken(t *testing.T) {
+	c := onelogin.New(cfg.clientID, cfg.clientSecret, cfg.shard, cfg.team)
+
+	var tests = []struct {
+		name     string
+		username string
+		password string
+		device   string
+		token    string
+		want     string
+		wantErr  bool
+	}{
+		{
+			"valid user with invalid push code",
+			cfg.username,
+			cfg.password,
+			"OneLogin SMS",
+			"1234567890",
+			"POST https://api.us.onelogin.com/api/1/login/verify_factor: OneLogin responsed with code 401, type Unauthorized and message Failed authentication with this factor",
+			true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var got string
+			a, err := c.Login.AuthenticateWithPushVerify(context.Background(), tt.username, tt.password, tt.device)
+			if err != nil {
+				t.Errorf("unexpected AuthenticateWithPushVerify error: %v", err)
+			}
+
+			_, err = c.Login.VerifyPushToken(context.Background(), a, tt.token)
 			if !tt.wantErr && (err != nil) {
 				t.Errorf("no error expected, got: %v", err)
 			}

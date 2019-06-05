@@ -30,7 +30,7 @@ type samlParams struct {
 // SAMLResponseMFA is a struct that contains details about MFA verification.
 type SAMLResponseMFA struct {
 	StateToken  string             `json:"state_token"`
-	Devices     []*Devices         `json:"devices"`
+	Devices     []*Device          `json:"devices"`
 	CallbackUrl string             `json:"callback_url"`
 	User        *AuthenticatedUser `json:"user"`
 }
