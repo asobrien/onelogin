@@ -92,18 +92,15 @@ func (s *SAMLService) GenerateSAMLAssertion(ctx context.Context, emailOrUsername
 		return nil, err
 	}
 
-	// Verify that the response is successful
 	if m.Status.Error {
 		return nil, errors.New(fmt.Sprintf("unexpected error generating SAML assertion: %s", m.Status.Message))
 	}
-
-	// Unpack based on message
 	assertion := &SAMLAssertion{
 		Status:  m.Status.Type,
 		Message: m.Status.Message,
 	}
 
-	// Nothing to unpack, just get out of here
+	// Nothing to unpack, bail out
 	if assertion.Status == "pending" {
 		return assertion, nil
 	}
@@ -111,17 +108,18 @@ func (s *SAMLService) GenerateSAMLAssertion(ctx context.Context, emailOrUsername
 	err = nil
 	switch assertion.Message {
 	case "Success":
-		// unpack data into assertion
 		r := ""
 		err = json.Unmarshal(m.Data, &r)
 		assertion.Assertion = &r
 	case "MFA is required for this user":
-		// unpack into MFA
 		var r []SAMLResponseMFA
 		err = json.Unmarshal(m.Data, &r)
-		assertion.MFA = &r[0] // TODO: check bounds
+		if len(r) != 1 {
+			err = errors.New("unexpected number of elements in MFA response")
+		} else {
+			assertion.MFA = &r[0]
+		}
 	default:
-		// some sort of error
 		err = errors.New(fmt.Sprintf("unable to parse response message: %s", assertion.Message))
 	}
 
