@@ -25,3 +25,10 @@ test-uat:
 		-client_secret="${ONELOGIN_AUTH_CLIENT_SECRET}" \
 		-shard="us" \
 		-team="metagiphy-dev"
+
+proxy-server:
+	@go run cmd/saml-proxy-server/*.go \
+		-client_id="${ONELOGIN_AUTH_CLIENT_ID}" \
+		-client_secret="${ONELOGIN_AUTH_CLIENT_SECRET}" \
+		-shard="us" \
+		-team="metagiphy-dev"
