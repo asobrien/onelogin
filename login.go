@@ -80,7 +80,6 @@ func (s *LoginService) authenticate(ctx context.Context, emailOrUsername string,
 	return &d[0], nil
 }
 
-// TODO: do we need a user by itself, or always just pass the auth response?
 // Authenticate a user with an email (or username) and a password. Note that a user can *always* successfully
 // authenticate whether or not MFA is required. To check whether a user is able to verify with strict MFA compliance,
 // AuthenticateWithVerify should be used.
@@ -165,14 +164,8 @@ func (s *LoginService) AuthenticateWithPushVerify(ctx context.Context, emailOrUs
 func (s *LoginService) VerifyPushToken(ctx context.Context, auth *AuthResponse, token string) (*AuthenticatedUser, error) {
 	u := "/api/1/login/verify_factor"
 
-	// FIXME: can't use this
-	// if s.verifyDevice == nil {
-	// 	return nil, errors.New("no verifyDevice assigned, 'AuthenticateWithPush' needs to called before this function can be used")
-	// }
-
 	// do not push notify on verify
 	p := &verifyFactorParams{
-		// TODO: *this* is really required!
 		DeviceID:    auth.verifyDevice,
 		StateToken:  auth.StateToken,
 		OTPToken:    token,
