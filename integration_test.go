@@ -263,7 +263,7 @@ func TestLoginVerifyPushToken(t *testing.T) {
 			var got string
 			a, err := c.Login.AuthenticateWithPushVerify(context.Background(), tt.username, tt.password, tt.device)
 			if err != nil {
-				t.Errorf("unexpected AuthenticateWithPushVerify error: %v", err)
+				t.Fatalf("unexpected AuthenticateWithPushVerify error: %v", err)
 			}
 
 			_, err = c.Login.VerifyPushToken(context.Background(), a, tt.token)
