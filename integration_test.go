@@ -25,6 +25,9 @@ type config struct {
 	username string
 	password string
 	otpURL   string
+
+	// saml
+	appID string
 }
 
 var cfg = &config{}
@@ -38,6 +41,8 @@ func init() {
 	flag.StringVar(&cfg.username, "username", "", "OneLogin username")
 	flag.StringVar(&cfg.password, "password", "", "OneLogin password")
 	flag.StringVar(&cfg.otpURL, "otp_url", "", "OneLogin OTP URL, used to generate TOTP as needed")
+
+	flag.StringVar(&cfg.appID, "app_id", "", "OneLogin app ID to test SAML with")
 }
 
 // Generate a TOTP token from a OTP URL.
@@ -279,6 +284,37 @@ func TestLoginVerifyPushToken(t *testing.T) {
 			}
 			if got != tt.want {
 				t.Errorf("got: %v, want: %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGenerateSAMLAssertion(t *testing.T) {
+	c := onelogin.New(cfg.clientID, cfg.clientSecret, cfg.shard, cfg.team)
+
+	var tests = []struct {
+		name     string
+		username string
+		password string
+		appID    string
+		want     string
+		wantErr  bool
+	}{
+		{
+			"valid user with valid app",
+			cfg.username,
+			cfg.password,
+			cfg.appID,
+			"",
+			false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := c.SAMLService.GenerateSAMLAssertion(context.Background(), tt.username, tt.password, tt.appID, "")
+			if err != nil {
+				t.Fatalf("error generating SAML assertion: %v", err)
 			}
 		})
 	}

@@ -16,7 +16,8 @@ test-integration:
 		-team="metagiphy-dev" \
 		-username="${ONELOGIN_USER_EMAIL}" \
 		-password="${ONELOGIN_USER_PASSWORD}" \
-		-otp_url="${ONELOGIN_USER_OTP}"
+		-otp_url="${ONELOGIN_USER_OTP}" \
+                -app_id=838187
 
 test-uat:
 	@go run -tags=uat uat_test/*.go \
