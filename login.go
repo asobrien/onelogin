@@ -185,8 +185,8 @@ func (s *LoginService) VerifyPushToken(ctx context.Context, auth *AuthResponse, 
 
 	var d []AuthenticatedUser
 	err = json.Unmarshal(resp.Data, &d)
-	if len(d) != 0 {
-		return nil, errors.New("unexppected authentication response")
+	if len(d) != 1 {
+		return nil, errors.New("unexpected authentication response")
 	}
 
 	return &d[0], nil
