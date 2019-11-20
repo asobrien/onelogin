@@ -19,7 +19,7 @@ type verifyFactorParams struct {
 	DoNotNotify bool   `json:"do_not_notify"`
 }
 
-// Devices contains registered user devices that can be used for MFA.
+// Device contains registered user devices that can be used for MFA.
 type Device struct {
 	DeviceType string `json:"device_type"`
 	DeviceID   int64  `json:"device_id"`
@@ -37,7 +37,7 @@ func getDeviceID(name string, devices []*Device) (string, error) {
 	}
 
 	if deviceID == "" {
-		return "", errors.New(fmt.Sprintf("verify device not found: %s", name))
+		return "", fmt.Errorf("verify device not found: %s", name)
 	}
 
 	return deviceID, nil

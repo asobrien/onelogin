@@ -7,6 +7,7 @@ type GroupService struct {
 	*service
 }
 
+// Group contains the ID (immutable) and name (mutable) of a group.
 type Group struct {
 	ID   int64  `json:"id"`
 	Name string `json:"name"`

@@ -30,7 +30,7 @@ type AuthResponse struct {
 	ExpiresAt    string             `json:"expires_at,omitempty"`
 	SessionToken string             `json:"session_token,omitempty"`
 	StateToken   string             `json:"state_token,omitempty"`
-	CallbackUrl  string             `json:"callback_url,omitempty"`
+	CallbackURL  string             `json:"callback_url,omitempty"`
 	Devices      []*Device          `json:"devices,omitempty"`
 
 	// deviceID that can be used in subsequent verify calls (e.g., VerifyPushToken)
@@ -152,7 +152,7 @@ func (s *LoginService) AuthenticateWithPushVerify(ctx context.Context, emailOrUs
 		return nil, err
 	}
 	if m.Status.Type != "pending" {
-		return nil, errors.New(fmt.Sprintf("verify factor failed, unexpected status = %v", m.Status.Type))
+		return nil, fmt.Errorf("verify factor failed, unexpected status = %v", m.Status.Type)
 	}
 
 	return auth, nil

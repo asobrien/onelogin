@@ -26,12 +26,11 @@ type samlParams struct {
 	IPAddress string `json:"ip_address,omitempty"`
 }
 
-// TODO: can be generic DeviceResponse?
 // SAMLResponseMFA is a struct that contains details about MFA verification.
 type SAMLResponseMFA struct {
 	StateToken  string             `json:"state_token"`
 	Devices     []*Device          `json:"devices"`
-	CallbackUrl string             `json:"callback_url"`
+	CallbackURL string             `json:"callback_url"`
 	User        *AuthenticatedUser `json:"user"`
 }
 
@@ -93,7 +92,7 @@ func (s *SAMLService) GenerateSAMLAssertion(ctx context.Context, emailOrUsername
 	}
 
 	if m.Status.Error {
-		return nil, errors.New(fmt.Sprintf("unexpected error generating SAML assertion: %s", m.Status.Message))
+		return nil, fmt.Errorf("unexpected error generating SAML assertion: %s", m.Status.Message)
 	}
 	assertion := &SAMLAssertion{
 		Status:  m.Status.Type,
@@ -120,12 +119,15 @@ func (s *SAMLService) GenerateSAMLAssertion(ctx context.Context, emailOrUsername
 			assertion.MFA = &r[0]
 		}
 	default:
-		err = errors.New(fmt.Sprintf("unable to parse response message: %s", assertion.Message))
+		err = fmt.Errorf("unable to parse response message: %s", assertion.Message)
 	}
 
 	return assertion, err
 }
 
+// GenerateSAMLAssertionWithVerify returns a SAML assertion forcing the use of
+// synchronous MFA at the time this function is called. This can be used with
+// with synchronous methods like 'Google Authenticator'.
 func (s *SAMLService) GenerateSAMLAssertionWithVerify(ctx context.Context, emailOrUsername, password, appID, ipAddress string, device string, token string) (*SAMLAssertion, error) {
 	saml, err := s.GenerateSAMLAssertion(ctx, emailOrUsername, password, appID, ipAddress)
 	if err != nil {
@@ -149,7 +151,7 @@ func (s *SAMLService) GenerateSAMLAssertionWithVerify(ctx context.Context, email
 		DoNotNotify: true,
 	}
 
-	resp, err := s.client.verifyFactor(ctx, saml.MFA.CallbackUrl, p)
+	resp, err := s.client.verifyFactor(ctx, saml.MFA.CallbackURL, p)
 	if err != nil {
 		return nil, err
 	}
