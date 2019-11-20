@@ -21,6 +21,7 @@ func (s *server) samlPost(req *http.Request) ([]byte, error) {
 		Username *string `json:"username"`
 		Password *string `json:"password"`
 		MFAToken *string `json:"mfa_token"`
+		AppID    *string `json:"app_id"`
 	}{}
 
 	err := d.Decode(&t)
@@ -32,12 +33,29 @@ func (s *server) samlPost(req *http.Request) ([]byte, error) {
 	} else if t.Password == nil {
 		return data, errors.New("required field is missing: 'password'")
 	} else if t.MFAToken == nil {
-		return data, errors.New("required field is missing: 'mfa-token'")
+		return data, errors.New("required field is missing: 'mfa_token'")
+	} else if t.AppID == nil {
+		return data, errors.New("required field is missing: 'app_id'")
+	}
+
+	// verify app_id is permitted, if specified
+	permittedApp := true
+	if len(cfg.appID) > 0 {
+		permittedApp = false
+		for _, id := range cfg.appID {
+			if id == *t.AppID {
+				permittedApp = true
+				break
+			}
+		}
+	}
+	if !permittedApp {
+		return nil, errors.New("specified app_id is not whitelisted")
 	}
 
 	saml, err :=
 		s.onelogin.SAMLService.GenerateSAMLAssertionWithVerify(context.Background(),
-			*t.Username, *t.Password, cfg.appID, "", cfg.mfaDevice, *t.MFAToken)
+			*t.Username, *t.Password, *t.AppID, "", cfg.mfaDevice, *t.MFAToken)
 	if err != nil {
 		return data, err
 	}

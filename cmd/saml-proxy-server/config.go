@@ -2,6 +2,8 @@ package main
 
 import (
 	"flag"
+	"fmt"
+	"strings"
 )
 
 type config struct {
@@ -13,8 +15,19 @@ type config struct {
 	clientSecret string
 	shard        string
 	team         string
-	appID        string
 	mfaDevice    string
+	appID        []string
+}
+
+type sliceFlags []string
+
+func (s sliceFlags) String() string {
+	return fmt.Sprintf(strings.Join(s, ","))
+}
+
+func (s *sliceFlags) Set(val string) error {
+	*s = append(*s, val)
+	return nil
 }
 
 var cfg = &config{}
@@ -26,7 +39,12 @@ func init() {
 	flag.StringVar(&cfg.clientSecret, "client-secret", "", "OneLogin API client secret")
 	flag.StringVar(&cfg.shard, "shard", "us", "OneLogin API shard location")
 	flag.StringVar(&cfg.team, "team", "", "OneLogin team name")
-	flag.StringVar(&cfg.appID, "app-id", "", "OneLogin app ID to proxy SAML for")
 	flag.StringVar(&cfg.mfaDevice, "mfa-device", "Google Authenticator",
 		"OneLogin MFA device to authenticate against")
+
+	var appIDFlags sliceFlags
+	flag.Var(&appIDFlags, "app-id", "Restrict SAML to specified app ID, may be repeated")
+
+	flag.Parse()
+	cfg.appID = appIDFlags
 }
