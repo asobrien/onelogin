@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/asobrien/onelogin"
-	pwd "github.com/hashicorp/vault/helper/password"
+	pwd "github.com/hashicorp/vault/sdk/helper/password"
 )
 
 type config struct {
