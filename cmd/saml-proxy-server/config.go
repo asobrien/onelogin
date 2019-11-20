@@ -27,6 +27,6 @@ func init() {
 	flag.StringVar(&cfg.shard, "shard", "us", "OneLogin API shard location")
 	flag.StringVar(&cfg.team, "team", "", "OneLogin team name")
 	flag.StringVar(&cfg.appID, "app-id", "", "OneLogin app ID to proxy SAML for")
-    flag.StringVar(&cfg.mfaDevice, "mfa-device", "Google Authenticator",
-        "OneLogin MFA device to authenticate against")
+	flag.StringVar(&cfg.mfaDevice, "mfa-device", "Google Authenticator",
+		"OneLogin MFA device to authenticate against")
 }
