@@ -10,7 +10,6 @@ package main
 
 import (
 	"errors"
-	"flag"
 	"log"
 	"net/http"
 
@@ -35,8 +34,6 @@ func newOneloginClient() (*onelogin.Client, error) {
 }
 
 func main() {
-	flag.Parse()
-
 	oneloginClient, err := newOneloginClient()
 	if err != nil {
 		log.Fatal(err)
@@ -48,7 +45,8 @@ func main() {
 	}
 	srv.routes()
 
-	if err := http.ListenAndServe(cfg.addr, srv.router); err != nil {
+	log.Printf("server listening on %s", cfg.addr)
+	if err := http.ListenAndServeTLS(cfg.addr, cfg.certFile, cfg.keyFile, srv.router); err != nil {
 		log.Fatal(err)
 	}
 }

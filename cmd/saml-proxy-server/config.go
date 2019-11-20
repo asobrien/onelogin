@@ -8,7 +8,9 @@ import (
 
 type config struct {
 	// server
-	addr string
+	addr     string
+	certFile string
+	keyFile  string
 
 	// onelogin
 	clientID     string
@@ -33,7 +35,9 @@ func (s *sliceFlags) Set(val string) error {
 var cfg = &config{}
 
 func init() {
-	flag.StringVar(&cfg.addr, "addr", ":8080", "Address to run proxy server on")
+	flag.StringVar(&cfg.addr, "addr", ":8443", "Address to run proxy server on")
+	flag.StringVar(&cfg.certFile, "cert-file", "/var/onelogin/cert.pem", "Path to TLS certificate file")
+	flag.StringVar(&cfg.keyFile, "key-file", "/var/onelogin/key.pem", "Path to TLS private key file")
 
 	flag.StringVar(&cfg.clientID, "client-id", "", "OneLogin API client ID")
 	flag.StringVar(&cfg.clientSecret, "client-secret", "", "OneLogin API client secret")

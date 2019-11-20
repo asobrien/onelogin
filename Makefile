@@ -26,8 +26,15 @@ test-uat:
 		-shard="us" \
 		-team="metagiphy-dev"
 
-proxy-server:
+generate-cert:
+		@cd tls && \
+		go run $$(go env GOROOT)/src/crypto/tls/generate_cert.go \
+			--host localhost,127.0.0.1
+
+proxy-server: generate-cert
 	@go run cmd/saml-proxy-server/*.go \
+		-cert-file=./tls/cert.pem \
+		-key-file=./tls/key.pem \
 		-client-id="${ONELOGIN_AUTH_CLIENT_ID}" \
 		-client-secret="${ONELOGIN_AUTH_CLIENT_SECRET}" \
 		-shard="us" \
