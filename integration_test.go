@@ -33,16 +33,16 @@ type config struct {
 var cfg = &config{}
 
 func init() {
-	flag.StringVar(&cfg.clientID, "client_id", "", "OneLogin API client ID")
-	flag.StringVar(&cfg.clientSecret, "client_secret", "", "OneLogin API client secret")
+	flag.StringVar(&cfg.clientID, "client-id", "", "OneLogin API client ID")
+	flag.StringVar(&cfg.clientSecret, "client-secret", "", "OneLogin API client secret")
 	flag.StringVar(&cfg.shard, "shard", "us", "OneLogin API shard location")
 	flag.StringVar(&cfg.team, "team", "", "OneLogin team name")
 
 	flag.StringVar(&cfg.username, "username", "", "OneLogin username")
 	flag.StringVar(&cfg.password, "password", "", "OneLogin password")
-	flag.StringVar(&cfg.otpURL, "otp_url", "", "OneLogin OTP URL, used to generate TOTP as needed")
+	flag.StringVar(&cfg.otpURL, "otp-url", "", "OneLogin OTP URL, used to generate TOTP as needed")
 
-	flag.StringVar(&cfg.appID, "app_id", "", "OneLogin app ID to test SAML with")
+	flag.StringVar(&cfg.appID, "app-id", "", "OneLogin app ID to test SAML with")
 }
 
 // Generate a TOTP token from a OTP URL.

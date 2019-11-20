@@ -25,8 +25,8 @@ type config struct {
 var cfg = &config{}
 
 func init() {
-	flag.StringVar(&cfg.clientID, "client_id", "", "OneLogin API client ID")
-	flag.StringVar(&cfg.clientSecret, "client_secret", "", "OneLogin API client secret")
+	flag.StringVar(&cfg.clientID, "client-id", "", "OneLogin API client ID")
+	flag.StringVar(&cfg.clientSecret, "client-secret", "", "OneLogin API client secret")
 	flag.StringVar(&cfg.shard, "shard", "us", "OneLogin API shard location")
 	flag.StringVar(&cfg.team, "team", "", "OneLogin team name")
 }

@@ -21,7 +21,6 @@ func (s *server) samlPost(req *http.Request) ([]byte, error) {
 		Username *string `json:"username"`
 		Password *string `json:"password"`
 		MFAToken *string `json:"mfa_token"`
-		AppID    *string `json:"app_id"`
 	}{}
 
 	err := d.Decode(&t)
@@ -33,14 +32,12 @@ func (s *server) samlPost(req *http.Request) ([]byte, error) {
 	} else if t.Password == nil {
 		return data, errors.New("required field is missing: 'password'")
 	} else if t.MFAToken == nil {
-		return data, errors.New("required field is missing: 'mfa_token'")
-	} else if t.AppID == nil {
-		return data, errors.New("required field is missing: 'app_id'")
+		return data, errors.New("required field is missing: 'mfa-token'")
 	}
 
 	saml, err :=
 		s.onelogin.SAMLService.GenerateSAMLAssertionWithVerify(context.Background(),
-			*t.Username, *t.Password, *t.AppID, "", "Google Authenticator", *t.MFAToken)
+			*t.Username, *t.Password, cfg.appID, "", cfg.mfaDevice, *t.MFAToken)
 	if err != nil {
 		return data, err
 	}
