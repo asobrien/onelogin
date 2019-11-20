@@ -25,30 +25,28 @@ type service struct {
 
 // A Client interacts with OneLogin.
 type Client struct {
-	client *http.Client
-
+	client  *http.Client
 	BaseURL *url.URL
 
 	clientID     string
 	clientSecret string
 	subdomain    string
-
 	// User agent used when communicating with the OneLogin api.
 	UserAgent string
-
-	common service // Reuse a single struct instead of allocating one for each service on the heap.
-
+	// Reuse a single struct instead of allocating one for each service on the heap.
+	common     service
 	oauthToken *oauthToken
-
-	Oauth *OauthService
-	Login *LoginService
-	User  *UserService
-	Role  *RoleService
-	Group *GroupService
-	// SAMLService  *SAMLService
-	// EventService *EventService
-
 	sync.Mutex
+
+	// Namespaced services
+	// https://developers.onelogin.com/api-docs/1/getting-started/dev-overview
+	Oauth       *OauthService
+	Login       *LoginService
+	User        *UserService
+	Role        *RoleService
+	Group       *GroupService
+	SAMLService *SAMLService
+	// EventService *EventService
 }
 
 // New returns a new OneLogin client.
@@ -66,6 +64,7 @@ func New(clientID, clientSecret, shard, subdomain string) *Client {
 	c.User = &UserService{service: &c.common}
 	c.Role = &RoleService{service: &c.common}
 	c.Group = &GroupService{service: &c.common}
+	c.SAMLService = &SAMLService{service: &c.common}
 
 	return c
 }
@@ -231,6 +230,7 @@ type responseMessage struct {
 		Code    int64  `json:"code"`
 		Type    string `json:"type"`
 		Message string `json:"message"`
+		Error   bool   `json:"error"`
 	} `json:"status"`
 	Pagination *struct {
 		BeforeCursor *string `json:"before_cursor"`

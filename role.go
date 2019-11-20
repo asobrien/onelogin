@@ -11,6 +11,7 @@ type RoleService struct {
 	*service
 }
 
+// Role contains the ID (immutable) and name (mutable) of a role.
 type Role struct {
 	ID   int64  `json:"id"`
 	Name string `json:"name"`

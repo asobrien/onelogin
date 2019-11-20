@@ -14,7 +14,7 @@ import (
 func TestLoginService_VerifyPushToken(t *testing.T) {
 	// assert an error is generated when no verifyDevice has been registered
 	c := onelogin.New("clientID", "clientSecret", "us", "myteam")
-	_, err := c.Login.VerifyPushToken(context.Background(), "token")
+	_, err := c.Login.VerifyPushToken(context.Background(), &onelogin.AuthResponse{}, "token")
 	assert.Error(t, err)
 }
 
@@ -53,7 +53,7 @@ func ExampleLoginService_AuthenticateWithPushVerify() {
 	c := onelogin.New("clientID", "clientSecret", "us", "myteam")
 
 	// Authenticate and generate a SMS token
-	err := c.Login.AuthenticateWithPushVerify(context.Background(), "username", "password", "OneLogin SMS")
+	resp, err := c.Login.AuthenticateWithPushVerify(context.Background(), "username", "password", "OneLogin SMS")
 	if err != nil {
 		panic(err)
 	}
@@ -67,7 +67,7 @@ func ExampleLoginService_AuthenticateWithPushVerify() {
 	}
 
 	// verify token and conmplete authentication
-	auth, err := c.Login.VerifyPushToken(context.Background(), token)
+	auth, err := c.Login.VerifyPushToken(context.Background(), resp, token)
 	if err != nil {
 		panic(err)
 	}

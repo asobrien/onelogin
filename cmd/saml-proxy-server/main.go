@@ -1,0 +1,52 @@
+// saml-proxy-server provides a server that can be used to proxy SAML assertion
+// requests from a trusted server.
+//
+// This server can be used directly, however it is *highly* advised to bind
+// this program to an appropriate frontend server or load-balancer that can
+// handle TLS termination. Without doing this you'll allow passwords to fly
+// around the network in plaintext and you violate the trust of your users.
+//
+package main
+
+import (
+	"errors"
+	"log"
+	"net/http"
+
+	"github.com/asobrien/onelogin"
+)
+
+type server struct {
+	router   *http.ServeMux
+	onelogin *onelogin.Client
+}
+
+func newOneloginClient() (*onelogin.Client, error) {
+	if cfg.clientID == "" {
+		return nil, errors.New("config error: clientID is unset")
+	} else if cfg.clientSecret == "" {
+		return nil, errors.New("config error: clientSecret is unset")
+	} else if cfg.team == "" {
+		return nil, errors.New("config error: team is unset")
+	}
+
+	return onelogin.New(cfg.clientID, cfg.clientSecret, cfg.shard, cfg.team), nil
+}
+
+func main() {
+	oneloginClient, err := newOneloginClient()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	srv := server{
+		router:   http.NewServeMux(),
+		onelogin: oneloginClient,
+	}
+	srv.routes()
+
+	log.Printf("server listening on %s", cfg.addr)
+	if err := http.ListenAndServeTLS(cfg.addr, cfg.certFile, cfg.keyFile, srv.router); err != nil {
+		log.Fatal(err)
+	}
+}
