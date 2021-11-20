@@ -1,21 +1,9 @@
 kind: pipeline
-name: test-go-1.12
+name: test-go-1.17
 
 steps:
 - name: test
-  image: golang:1.12
-  commands:
-  - go get
-  - go test
-
----
-
-kind: pipeline
-name: test-go-1.11
-
-steps:
-- name: test
-  image: golang:1.11
+  image: golang:1.17
   commands:
   - go get
   - go test
