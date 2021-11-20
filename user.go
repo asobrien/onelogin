@@ -84,7 +84,7 @@ func (s *UserService) GetUsers(ctx context.Context) ([]*User, error) {
 	return users, nil
 }
 
-// GetUser returns a OneLogin user.
+// GetUser returns a OneLogin user specified by id.
 func (s *UserService) GetUser(ctx context.Context, id int64) (*User, error) {
 	u := fmt.Sprintf("/api/1/users/%v", id)
 
@@ -105,6 +105,34 @@ func (s *UserService) GetUser(ctx context.Context, id int64) (*User, error) {
 	}
 
 	return users[0], nil
+}
+
+// GetCustomAttributes returns a list of all custom attributes fields (also
+// known as custom user fields) that have been defined for your account.
+//
+// https://developers.onelogin.com/api-docs/1/users/get-custom-attributes
+func (s *UserService) GetCustomAttributes(ctx context.Context) ([]string, error) {
+	u := "/api/1/users/custom_attributes"
+
+	req, err := s.client.NewRequest("GET", u, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.client.AddAuthorization(ctx, req); err != nil {
+		return nil, err
+	}
+
+	var v [][]string
+	_, err = s.client.Do(ctx, req, &v)
+	if err != nil {
+		return nil, err
+	}
+	var attrs []string
+	if len(v) > 0 {
+		attrs = v[0]
+	}
+	return attrs, nil
 }
 
 // UpdateCustomAttributes returns a OneLogin user.
